@@ -3,7 +3,7 @@ package(default_visibility = ["//visibility:private"])
 
 _imports = [p[:len(p)-2] for p in glob(["{}/**/*.a".format(d) for d in [%{deps}]])]
 [cc_import(
-    name = "_".join(i.split("/")),
+    name = i.replace("/", "_"),
     hdrs = glob([%{hdrs}]),
     # TODO: library extension for platform.
     static_library = "{}.a".format(i),
@@ -16,7 +16,7 @@ cc_library(
     copts = [%{copts}],
     includes = [%{includes}],
     linkopts = [%{linkopts}],
-    deps = ["_".join(i.split("/")) for i in _imports],
+    deps = [i.replace("/", "_") for i in _imports],
 )
 
 cc_library(

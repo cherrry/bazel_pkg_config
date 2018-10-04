@@ -7,7 +7,7 @@ def _error(message):
 def _split(result, delimeter = " "):
     if result.error != None:
         return result
-    return _success([arg for arg in result.value.strip().split(" ") if arg])
+    return _success([arg for arg in result.value.strip().split(delimeter) if arg])
 
 def _find_binary(ctx, binary_name):
     binary = ctx.which(binary_name)
@@ -78,7 +78,7 @@ def _deps(ctx, pkg_config, pkg_name):
     deps, unused = _extract_prefix(deps.value, "-L", strip = True)
     result = []
     for dep in {dep: True for dep in deps}.keys():
-        base = "deps_" + "_".join(dep.split("/"))
+        base = "deps_" + dep.replace("/", "_").replace(".", "_")
         result += _symlinks(ctx, base, [dep])
     return _success(result)
 
