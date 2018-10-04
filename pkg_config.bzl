@@ -106,6 +106,8 @@ def _pkg_config_impl(ctx):
     strip_prefix = "includes"
     if len(includes) == 1:
         strip_prefix = includes[0]
+    if ctx.attr.strip_include_prefix != "":
+        strip_prefix += "/" + ctx.attr.strip_include_prefix
 
     copts = _copts(ctx, pkg_config, pkg_name)
     if copts.error != None:
@@ -136,6 +138,7 @@ def _pkg_config_impl(ctx):
 pkg_config = repository_rule(
     attrs = {
         "pkg_name": attr.string(),
+        "strip_include_prefix": attr.string(),
     },
     local = True,
     implementation = _pkg_config_impl,

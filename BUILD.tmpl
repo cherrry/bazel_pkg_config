@@ -21,7 +21,7 @@ cc_library(
 
 cc_library(
     name = "lib",
-    hdrs = glob([%{hdrs}]),
+    hdrs = glob(["%{strip_prefix}/**/*.h"]),
     deps = [":internal_lib"],
     visibility = ["//visibility:public"],
     strip_include_prefix = "%{strip_prefix}",
