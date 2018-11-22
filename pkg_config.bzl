@@ -103,11 +103,11 @@ def _pkg_config_impl(ctx):
         return includes
     includes = includes.value
     includes = _symlinks(ctx, "includes", includes)
-    strip_prefix = "includes"
+    strip_include = "includes"
     if len(includes) == 1:
-        strip_prefix = includes[0]
-    if ctx.attr.strip_include_prefix != "":
-        strip_prefix += "/" + ctx.attr.strip_include_prefix
+        strip_include = includes[0]
+    if ctx.attr.strip_include != "":
+        strip_include += "/" + ctx.attr.strip_include
 
     copts = _copts(ctx, pkg_config, pkg_name)
     if copts.error != None:
@@ -125,6 +125,10 @@ def _pkg_config_impl(ctx):
         return deps
     deps = deps.value
 
+    include_prefix = ctx.attr.name
+    if ctx.attr.include_prefix != "":
+      include_prefix = ctx.attr.include_prefix + "/" + ctx.attr.name
+
     build = ctx.template("BUILD", Label("//:BUILD.tmpl"), substitutions = {
         "%{name}": ctx.attr.name,
         "%{hdrs}": _fmt_glob(includes),
@@ -132,13 +136,15 @@ def _pkg_config_impl(ctx):
         "%{copts}": _fmt_array(copts),
         "%{deps}": _fmt_array(deps),
         "%{linkopts}": _fmt_array(linkopts),
-        "%{strip_prefix}": strip_prefix,
+        "%{strip_include}": strip_include,
+        "%{include_prefix}": include_prefix,
     }, executable = False)
 
 pkg_config = repository_rule(
     attrs = {
         "pkg_name": attr.string(),
-        "strip_include_prefix": attr.string(),
+        "include_prefix": attr.string(),
+        "strip_include": attr.string(),
     },
     local = True,
     implementation = _pkg_config_impl,
