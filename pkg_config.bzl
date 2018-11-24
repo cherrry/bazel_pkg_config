@@ -168,12 +168,12 @@ def _pkg_config_impl(ctx):
 
 pkg_config = repository_rule(
     attrs = {
-        "pkg_name": attr.string(),
-        "include_prefix": attr.string(),
-        "strip_include": attr.string(),
-        "version": attr.string(),
-        "min_version": attr.string(),
-        "max_version": attr.string(),
+        "pkg_name": attr.string(doc = "Package name for pkg-config query, default to name."),
+        "include_prefix": attr.string(doc = "Additional prefix when including file, e.g. third_party. Compatible with strip_include option to produce desired include paths."),
+        "strip_include": attr.string(doc = "Strip prefix when including file, e.g. libs, files not included will be invisible. Compatible with include_prefix option to produce desired include paths."),
+        "version": attr.string(doc = "Exact package version."),
+        "min_version": attr.string(doc = "Minimum package version."),
+        "max_version": attr.string(doc = "Maximum package version."),
     },
     local = True,
     implementation = _pkg_config_impl,
