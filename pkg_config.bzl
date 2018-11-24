@@ -18,11 +18,33 @@ def _find_binary(ctx, binary_name):
 def _execute(ctx, binary, args):
     result = ctx.execute([binary] + args)
     if result.return_code != 0:
-        return _error("Failed execute {} {}", binary, args)
+        return _error("Failed execute {} {}".format(binary, args))
     return _success(result.stdout)
 
 def _pkg_config(ctx, pkg_config, pkg_name, args):
     return _execute(ctx, pkg_config, [pkg_name] + args)
+
+def _check(ctx, pkg_config, pkg_name):
+    exist = _pkg_config(ctx, pkg_config, pkg_name, ["--exists"])
+    if exist.error != None:
+        return _error("Package {} does not exist".format(pkg_name))
+
+    if ctx.attr.version != "":
+        version = _pkg_config(ctx, pkg_config, pkg_name, ["--exact-version", ctx.attr.version])
+        if version.error != None:
+            return _error("Require {} version = {}".format(pkg_name, ctx.attr.version))
+
+    if ctx.attr.min_version != "":
+        version = _pkg_config(ctx, pkg_config, pkg_name, ["--atleast-version", ctx.attr.min_version])
+        if version.error != None:
+            return _error("Require {} version >= {}".format(pkg_name, ctx.attr.min_version))
+
+    if ctx.attr.max_version != "":
+        version = _pkg_config(ctx, pkg_config, pkg_name, ["--max-version", ctx.attr.max_version])
+        if version.error != None:
+            return _error("Require {} version <= {}".format(pkg_name, ctx.attr.max_version))
+
+    return _success(None)
 
 def _extract_prefix(flags, prefix, strip = True):
     stripped, remain = [], []
@@ -98,6 +120,10 @@ def _pkg_config_impl(ctx):
         return pkg_config
     pkg_config = pkg_config.value
 
+    check = _check(ctx, pkg_config, pkg_name)
+    if check.error != None:
+        return check
+
     includes = _includes(ctx, pkg_config, pkg_name)
     if includes.error != None:
         return includes
@@ -127,7 +153,7 @@ def _pkg_config_impl(ctx):
 
     include_prefix = ctx.attr.name
     if ctx.attr.include_prefix != "":
-      include_prefix = ctx.attr.include_prefix + "/" + ctx.attr.name
+        include_prefix = ctx.attr.include_prefix + "/" + ctx.attr.name
 
     build = ctx.template("BUILD", Label("//:BUILD.tmpl"), substitutions = {
         "%{name}": ctx.attr.name,
@@ -145,6 +171,9 @@ pkg_config = repository_rule(
         "pkg_name": attr.string(),
         "include_prefix": attr.string(),
         "strip_include": attr.string(),
+        "version": attr.string(),
+        "min_version": attr.string(),
+        "max_version": attr.string(),
     },
     local = True,
     implementation = _pkg_config_impl,
