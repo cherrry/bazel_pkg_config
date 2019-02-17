@@ -69,13 +69,13 @@ def _copts(ctx, pkg_config, pkg_name):
     return _split(_pkg_config(ctx, pkg_config, pkg_name, [
         "--cflags-only-other",
         "--libs-only-L",
-        "--libs-only-l",
         "--static",
     ]))
 
 def _linkopts(ctx, pkg_config, pkg_name):
     return _split(_pkg_config(ctx, pkg_config, pkg_name, [
         "--libs-only-other",
+        "--libs-only-l",
         "--static",
     ]))
 
