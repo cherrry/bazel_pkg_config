@@ -79,6 +79,13 @@ def _linkopts(ctx, pkg_config, pkg_name):
         "--static",
     ]))
 
+def _ignore_opts(opts, ignore_opts):
+    remain = []
+    for opt in opts:
+        if opt not in ignore_opts:
+            remain += [opt]
+    return remain
+
 def _symlinks(ctx, basename, srcpaths):
     result = []
     root = ctx.path("")
@@ -135,16 +142,16 @@ def _pkg_config_impl(ctx):
     if ctx.attr.strip_include != "":
         strip_include += "/" + ctx.attr.strip_include
 
+    ignore_opts = ctx.attr.ignore_opts
     copts = _copts(ctx, pkg_config, pkg_name)
     if copts.error != None:
         return copts
-
-    copts = copts.value
+    copts = _ignore_opts(copts.value, ignore_opts)
 
     linkopts = _linkopts(ctx, pkg_config, pkg_name)
     if linkopts.error != None:
         return linkopts
-    linkopts = linkopts.value
+    linkopts = _ignore_opts(linkopts.value, ignore_opts)
 
     deps = _deps(ctx, pkg_config, pkg_name)
     if deps.error != None:
@@ -180,6 +187,7 @@ pkg_config = repository_rule(
         "deps": attr.string_list(doc = "Dependency targets."),
         "linkopts": attr.string_list(doc = "Extra linkopts value."),
         "copts": attr.string_list(doc = "Extra copts value."),
+        "ignore_opts": attr.string_list(doc = "Ignore listed opts in copts or linkopts."),
     },
     local = True,
     implementation = _pkg_config_impl,
