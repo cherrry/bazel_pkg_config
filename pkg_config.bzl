@@ -16,7 +16,9 @@ def _find_binary(ctx, binary_name):
     return _success(binary)
 
 def _execute(ctx, binary, args):
-    result = ctx.execute([binary] + args)
+    result = ctx.execute(
+        [binary] + args,
+    )
     if result.return_code != 0:
         return _error("Failed execute {} {}".format(binary, args))
     return _success(result.stdout)
@@ -86,6 +88,12 @@ def _ignore_opts(opts, ignore_opts):
             remain += [opt]
     return remain
 
+def _symlink_no_duplicate(ctx, src, dest):
+    if not dest.exists:
+        ctx.symlink(src, dest)
+        return True
+    return False
+
 def _symlinks(ctx, basename, srcpaths):
     result = []
     root = ctx.path("")
@@ -93,8 +101,15 @@ def _symlinks(ctx, basename, srcpaths):
     rootlen = len(str(base)) - len(basename)
     for src in [ctx.path(p) for p in srcpaths]:
         dest = base.get_child(src.basename)
-        ctx.symlink(src, dest)
-        result += [str(dest)[rootlen:]]
+        # if the directory already exists then:
+        # 1) attempt to modify the name with the parent directory name
+        # 2) if that fails don't create the symlink at all
+        # we can sometimes skip symlink creation because of ocassional
+        # duplicates in pkg_config output
+        if dest.exists:
+            dest = base.get_child(src.basename + src.dirname.basename)
+        if _symlink_no_duplicate(ctx, src, dest):
+            result += [str(dest)[rootlen:]]
     return result
 
 def _deps(ctx, pkg_config, pkg_name):
